@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: {{ .Release.Name }}-helm-learning-service
+  labels:
+    app: helm-learning-app
+
+spec:
+  type: {{ .Values.service.type }}
+
+  selector:
+    app: helm-learning-app
+
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.service.port }}
+      targetPort: http
