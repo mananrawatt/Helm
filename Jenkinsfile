@@ -1,6 +1,6 @@
 pipeline {
 
-
+```
 agent any
 
 parameters {
@@ -22,6 +22,7 @@ stages {
         steps {
             sh '''
                 echo "Checking required tools..."
+
                 docker --version
                 kind version
                 kubectl version --client
@@ -35,6 +36,7 @@ stages {
             script {
 
                 if (params.SERVICE == 'HELM') {
+
                     env.SERVICE_PATH = "services/application"
                     env.IMAGE_NAME = "helm"
                     env.CHART_PATH = "./helm-charts/helm-learning-chart"
@@ -42,20 +44,41 @@ stages {
                     env.DEPLOYMENT_NAME = "helm-learning-helm-learning-app"
 
                 } else if (params.SERVICE == 'LOGIN') {
+
                     env.SERVICE_PATH = "services/login"
                     env.IMAGE_NAME = "login"
                     env.CHART_PATH = "./helm-charts/login"
                     env.RELEASE_NAME = "login-release"
                     env.DEPLOYMENT_NAME = "login-release-login-app"
+
+                } else {
+
+                    error("Invalid service selected: ${params.SERVICE}")
                 }
 
+                echo "================================="
                 echo "Selected Service: ${params.SERVICE}"
                 echo "Service Path: ${env.SERVICE_PATH}"
                 echo "Image Name: ${env.IMAGE_NAME}"
                 echo "Chart Path: ${env.CHART_PATH}"
                 echo "Release Name: ${env.RELEASE_NAME}"
                 echo "Deployment Name: ${env.DEPLOYMENT_NAME}"
+                echo "================================="
             }
+        }
+    }
+
+    stage('Verify Service Files') {
+        steps {
+            sh '''
+                echo "Checking selected service directory..."
+
+                ls -la ${SERVICE_PATH}
+
+                test -f ${SERVICE_PATH}/Dockerfile
+                test -f ${SERVICE_PATH}/app.py
+                test -f ${SERVICE_PATH}/requirements.txt
+            '''
         }
     }
 
@@ -65,8 +88,8 @@ stages {
                 echo "Building Docker image..."
 
                 docker build \
-                -t ${IMAGE_NAME}:${BUILD_NUMBER} \
-                ${SERVICE_PATH}
+                    -t ${IMAGE_NAME}:${BUILD_NUMBER} \
+                    ${SERVICE_PATH}
             '''
         }
     }
@@ -77,8 +100,8 @@ stages {
                 echo "Loading image into Kind cluster..."
 
                 kind load docker-image \
-                ${IMAGE_NAME}:${BUILD_NUMBER} \
-                --name ${CLUSTER_NAME}
+                    ${IMAGE_NAME}:${BUILD_NUMBER} \
+                    --name ${CLUSTER_NAME}
             '''
         }
     }
@@ -89,11 +112,11 @@ stages {
                 echo "Deploying ${SERVICE} using Helm..."
 
                 helm upgrade --install \
-                ${RELEASE_NAME} \
-                ${CHART_PATH} \
-                --set image.repository=${IMAGE_NAME} \
-                --set image.tag=${BUILD_NUMBER} \
-                --set image.pullPolicy=IfNotPresent
+                    ${RELEASE_NAME} \
+                    ${CHART_PATH} \
+                    --set image.repository=${IMAGE_NAME} \
+                    --set image.tag=${BUILD_NUMBER} \
+                    --set image.pullPolicy=IfNotPresent
             '''
         }
     }
@@ -104,14 +127,25 @@ stages {
                 echo "Waiting for deployment rollout..."
 
                 kubectl rollout status \
-                deployment/${DEPLOYMENT_NAME} \
-                --timeout=120s
+                    deployment/${DEPLOYMENT_NAME} \
+                    --timeout=120s
 
-                echo "Checking Helm release..."
+                echo "================================="
+                echo "Helm Release Status"
+                echo "================================="
+
                 helm status ${RELEASE_NAME}
 
-                echo "Checking Kubernetes resources..."
+                echo "================================="
+                echo "Kubernetes Pods"
+                echo "================================="
+
                 kubectl get pods
+
+                echo "================================="
+                echo "Kubernetes Services"
+                echo "================================="
+
                 kubectl get services
             '''
         }
@@ -119,6 +153,7 @@ stages {
 }
 
 post {
+
     success {
         echo "${params.SERVICE} microservice deployed successfully!"
     }
@@ -127,6 +162,6 @@ post {
         echo "Pipeline failed. Check the Jenkins console output."
     }
 }
-
+```
 
 }
