@@ -13,19 +13,15 @@ parameters {
 
 environment {
     CLUSTER_NAME = "helm"
-
     PATH = "/usr/local/bin:/opt/homebrew/bin:${env.PATH}"
 }
 
 stages {
 
     stage('Check Tools') {
-
         steps {
-
             sh '''
                 echo "Checking required tools..."
-
                 docker --version
                 kind version
                 kubectl version --client
@@ -35,13 +31,10 @@ stages {
     }
 
     stage('Set Service Configuration') {
-
         steps {
-
             script {
 
                 if (params.SERVICE == 'HELM') {
-
                     env.SERVICE_PATH = "services/application"
                     env.IMAGE_NAME = "helm"
                     env.CHART_PATH = "./helm-charts/helm-learning-chart"
@@ -49,7 +42,6 @@ stages {
                     env.DEPLOYMENT_NAME = "helm-learning-helm-learning-app"
 
                 } else if (params.SERVICE == 'LOGIN') {
-
                     env.SERVICE_PATH = "services/login"
                     env.IMAGE_NAME = "login"
                     env.CHART_PATH = "./helm-charts/login"
@@ -68,9 +60,7 @@ stages {
     }
 
     stage('Build Docker Image') {
-
         steps {
-
             sh '''
                 echo "Building Docker image..."
 
@@ -82,9 +72,7 @@ stages {
     }
 
     stage('Load Image into Kind') {
-
         steps {
-
             sh '''
                 echo "Loading image into Kind cluster..."
 
@@ -96,9 +84,7 @@ stages {
     }
 
     stage('Deploy using Helm') {
-
         steps {
-
             sh '''
                 echo "Deploying ${SERVICE} using Helm..."
 
@@ -113,9 +99,7 @@ stages {
     }
 
     stage('Verify Deployment') {
-
         steps {
-
             sh '''
                 echo "Waiting for deployment rollout..."
 
@@ -124,11 +108,9 @@ stages {
                 --timeout=120s
 
                 echo "Checking Helm release..."
-
                 helm status ${RELEASE_NAME}
 
                 echo "Checking Kubernetes resources..."
-
                 kubectl get pods
                 kubectl get services
             '''
@@ -137,14 +119,11 @@ stages {
 }
 
 post {
-
     success {
-
         echo "${params.SERVICE} microservice deployed successfully!"
     }
 
     failure {
-
         echo "Pipeline failed. Check the Jenkins console output."
     }
 }
