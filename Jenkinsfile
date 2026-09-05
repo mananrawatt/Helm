@@ -1,6 +1,5 @@
 pipeline {
 
-```
 agent any
 
 parameters {
@@ -162,6 +161,6 @@ post {
         echo "Pipeline failed. Check the Jenkins console output."
     }
 }
-```
+
 
 }
