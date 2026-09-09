@@ -78,17 +78,32 @@ stages {
         }
     }
 
-    stage('Load Image into Kind') {
-        steps {
-            sh '''
-                echo "Loading image into Kind cluster..."
+    // stage('Load Image into Kind') {
+    //     steps {
+    //         sh '''
+    //             echo "Loading image into Kind cluster..."
 
-                kind load docker-image \
-                ${IMAGE_NAME}:${BUILD_NUMBER} \
-                --name ${CLUSTER_NAME}
-            '''
+    //             kind load docker-image \
+    //             ${IMAGE_NAME}:${BUILD_NUMBER} \
+    //             --name ${CLUSTER_NAME}
+    //         '''
+    //     }
+    // }
+    stage('Load Image into Kind') {
+    steps {
+        script {
+            retry(3) {
+                sh '''
+                    echo "Loading image into Kind cluster..."
+
+                    kind load docker-image \
+                        ${IMAGE_NAME}:${BUILD_NUMBER} \
+                        --name ${CLUSTER_NAME}
+                '''
+            }
         }
     }
+}
 
     stage('Deploy using Helm') {
         steps {
