@@ -1,0 +1,13 @@
+replicaCount: 2
+
+image:
+  repository: payments
+  pullPolicy: IfNotPresent
+  tag: v1
+
+service:
+  type: ClusterIP
+  port: 80
+
+container:
+  port: 8087
