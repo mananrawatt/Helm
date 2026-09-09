@@ -37,16 +37,16 @@ stages {
                     env.IMAGE_NAME = 'helm'
                     env.SERVICE_PATH = 'services/application'
                     env.CHART_PATH = './helm-charts/helm-learning-chart'
-                    env.RELEASE_NAME = 'helm-learning'
-                    env.DEPLOYMENT_NAME = 'helm-learning-helm-learning-app'
+                    env.RELEASE_NAME = 'helm'
+                    env.DEPLOYMENT_NAME = 'helm'
                 }
 
                 else if (params.SERVICE == 'LOGIN') {
                     env.IMAGE_NAME = 'login'
                     env.SERVICE_PATH = 'services/login'
                     env.CHART_PATH = './helm-charts/login'
-                    env.RELEASE_NAME = 'login-release'
-                    env.DEPLOYMENT_NAME = 'login-release-login'
+                    env.RELEASE_NAME = 'login'
+                    env.DEPLOYMENT_NAME = 'login'
                 }
 
                else if (params.SERVICE == 'PAYMENTS') {

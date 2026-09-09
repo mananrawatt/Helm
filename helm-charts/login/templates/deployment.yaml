@@ -2,25 +2,25 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: {{ .Release.Name }}-login-app
+  name: login
   labels:
-    app: login-app
+    app: login
 
 spec:
   replicas: {{ .Values.replicaCount }}
 
   selector:
     matchLabels:
-      app: login-app
+      app: login
 
   template:
     metadata:
       labels:
-        app: login-app
+        app: login
 
     spec:
       containers:
-        - name: login-app
+        - name: login
 
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
 

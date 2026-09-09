@@ -4,13 +4,13 @@ kind: Service
 metadata:
   name: {{ .Release.Name }}-login-service
   labels:
-    app: login-app
+    app: login
 
 spec:
   type: {{ .Values.service.type }}
 
   selector:
-    app: login-app
+    app: login
 
   ports:
     - name: http

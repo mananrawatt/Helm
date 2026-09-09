@@ -2,25 +2,25 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: {{ .Release.Name }}-helm-learning-app
+  name: helm
   labels:
-    app: helm-learning-app
+    app: helm
 
 spec:
   replicas: {{ .Values.replicaCount }}
 
   selector:
     matchLabels:
-      app: helm-learning-app
+      app: helm
 
   template:
     metadata:
       labels:
-        app: helm-learning-app
+        app: helm
 
     spec:
       containers:
-        - name: helm-learning-app
+        - name: helm
 
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
 

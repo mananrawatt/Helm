@@ -4,13 +4,13 @@ kind: Service
 metadata:
   name: {{ .Release.Name }}-helm-learning-service
   labels:
-    app: helm-learning-app
+    app: helm
 
 spec:
   type: {{ .Values.service.type }}
 
   selector:
-    app: helm-learning-app
+    app: helm
 
   ports:
     - name: http
