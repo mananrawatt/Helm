@@ -49,12 +49,12 @@ stages {
                     env.DEPLOYMENT_NAME = 'login-release-login'
                 }
 
-                else if (params.SERVICE == 'PAYMENTS') {
+               else if (params.SERVICE == 'PAYMENTS') {
                     env.IMAGE_NAME = 'payments'
                     env.SERVICE_PATH = 'services/payments'
                     env.CHART_PATH = './helm-charts/payments'
                     env.RELEASE_NAME = 'payments-release'
-                    env.DEPLOYMENT_NAME = 'payments-release-payments'
+                    env.DEPLOYMENT_NAME = 'payments'
                 }
 
                 echo "Selected service: ${params.SERVICE}"
