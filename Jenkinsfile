@@ -19,6 +19,14 @@ pipeline {
 
     environment {
         CLUSTER_NAME = 'helm'
+
+        // macOS tool paths
+        DOCKER = '/usr/local/bin/docker'
+        KIND = '/opt/homebrew/bin/kind'
+        KUBECTL = '/opt/homebrew/bin/kubectl'
+        HELM = '/opt/homebrew/bin/helm'
+
+        PATH = "/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
     }
 
     stages {
@@ -88,20 +96,35 @@ pipeline {
                         env.DEPLOYMENT_NAME = 'gateway'
                     }
 
+                    // Image tag = v + Jenkins build number
                     env.IMAGE_TAG = "v${env.BUILD_NUMBER}"
 
                     echo """
-                    ========================================
-                    SERVICE       : ${params.SERVICE}
-                    IMAGE         : ${env.IMAGE_NAME}:${env.IMAGE_TAG}
-                    SERVICE PATH  : ${env.SERVICE_PATH}
-                    CHART PATH    : ${env.CHART_PATH}
-                    VALUES FILE   : ${env.VALUES_FILE}
-                    RELEASE       : ${env.RELEASE_NAME}
-                    DEPLOYMENT    : ${env.DEPLOYMENT_NAME}
-                    ========================================
-                    """
+==================================================
+SERVICE        : ${params.SERVICE}
+IMAGE          : ${env.IMAGE_NAME}:${env.IMAGE_TAG}
+SERVICE PATH   : ${env.SERVICE_PATH}
+CHART PATH     : ${env.CHART_PATH}
+VALUES FILE    : ${env.VALUES_FILE}
+RELEASE NAME   : ${env.RELEASE_NAME}
+DEPLOYMENT     : ${env.DEPLOYMENT_NAME}
+CLUSTER        : ${env.CLUSTER_NAME}
+==================================================
+"""
                 }
+            }
+        }
+
+        stage('Check Tools') {
+            steps {
+                sh """
+                    echo "Checking required tools..."
+
+                    ${DOCKER} --version
+                    ${KIND} version
+                    ${KUBECTL} version --client
+                    ${HELM} version
+                """
             }
         }
 
@@ -109,7 +132,7 @@ pipeline {
             steps {
                 sh """
                     echo "Building Docker image..."
-                    docker build \
+                    ${DOCKER} build \
                         -t ${IMAGE_NAME}:${IMAGE_TAG} \
                         ${SERVICE_PATH}
                 """
@@ -120,7 +143,8 @@ pipeline {
             steps {
                 sh """
                     echo "Loading ${IMAGE_NAME}:${IMAGE_TAG} into Kind..."
-                    kind load docker-image \
+
+                    ${KIND} load docker-image \
                         ${IMAGE_NAME}:${IMAGE_TAG} \
                         --name ${CLUSTER_NAME}
                 """
@@ -129,15 +153,36 @@ pipeline {
 
         stage('Deploy with Helm') {
             steps {
-                sh """
-                    echo "Deploying ${IMAGE_NAME}:${IMAGE_TAG}..."
+                script {
 
-                    helm upgrade --install ${RELEASE_NAME} ${CHART_PATH} \
-                        ${VALUES_FILE ? "-f ${VALUES_FILE}" : ""} \
-                        --set image.repository=${IMAGE_NAME} \
-                        --set image.tag=${IMAGE_TAG} \
-                        --set image.pullPolicy=IfNotPresent
-                """
+                    if (env.VALUES_FILE?.trim()) {
+
+                        sh """
+                            echo "Deploying using generic Helm chart..."
+
+                            ${HELM} upgrade --install \
+                                ${RELEASE_NAME} \
+                                ${CHART_PATH} \
+                                -f ${VALUES_FILE} \
+                                --set image.repository=${IMAGE_NAME} \
+                                --set image.tag=${IMAGE_TAG} \
+                                --set image.pullPolicy=IfNotPresent
+                        """
+
+                    } else {
+
+                        sh """
+                            echo "Deploying using service-specific Helm chart..."
+
+                            ${HELM} upgrade --install \
+                                ${RELEASE_NAME} \
+                                ${CHART_PATH} \
+                                --set image.repository=${IMAGE_NAME} \
+                                --set image.tag=${IMAGE_TAG} \
+                                --set image.pullPolicy=IfNotPresent
+                        """
+                    }
+                }
             }
         }
 
@@ -146,57 +191,73 @@ pipeline {
                 sh """
                     echo "Waiting for deployment rollout..."
 
-                    kubectl rollout status \
+                    ${KUBECTL} rollout status \
                         deployment/${DEPLOYMENT_NAME} \
                         --timeout=120s
 
                     echo ""
-                    echo "========================================"
+                    echo "=================================================="
+                    echo "DEPLOYMENTS"
+                    echo "=================================================="
+
+                    ${KUBECTL} get deployments
+
+                    echo ""
+                    echo "=================================================="
                     echo "PODS"
-                    echo "========================================"
+                    echo "=================================================="
 
-                    kubectl get pods -o wide
+                    ${KUBECTL} get pods -o wide
 
                     echo ""
-                    echo "========================================"
+                    echo "=================================================="
                     echo "SERVICES"
-                    echo "========================================"
+                    echo "=================================================="
 
-                    kubectl get services
+                    ${KUBECTL} get services
 
                     echo ""
-                    echo "========================================"
+                    echo "=================================================="
                     echo "HELM RELEASE"
-                    echo "========================================"
+                    echo "=================================================="
 
-                    helm status ${RELEASE_NAME}
+                    ${HELM} status ${RELEASE_NAME}
                 """
             }
         }
     }
 
     post {
+
         success {
             echo """
-            ========================================
-            DEPLOYMENT SUCCESSFUL
-            ========================================
+==================================================
+DEPLOYMENT SUCCESSFUL
+==================================================
 
-            Service : ${params.SERVICE}
-            Image   : ${IMAGE_NAME}:${IMAGE_TAG}
-            Release : ${RELEASE_NAME}
-            """
+Service       : ${params.SERVICE}
+Image         : ${env.IMAGE_NAME}:${env.IMAGE_TAG}
+Release       : ${env.RELEASE_NAME}
+Deployment    : ${env.DEPLOYMENT_NAME}
+Cluster       : ${env.CLUSTER_NAME}
+
+==================================================
+"""
         }
 
         failure {
             echo """
-            ========================================
-            DEPLOYMENT FAILED
-            ========================================
+==================================================
+DEPLOYMENT FAILED
+==================================================
 
-            Service : ${params.SERVICE}
-            Image   : ${IMAGE_NAME}:${IMAGE_TAG}
-            """
+Service       : ${params.SERVICE}
+Image         : ${env.IMAGE_NAME}:${env.IMAGE_TAG}
+
+Please check the Jenkins console output.
+
+==================================================
+"""
         }
     }
 }
