@@ -1,0 +1,15 @@
+serviceName: gateway
+
+replicaCount: 2
+
+image:
+  repository: gateway
+  tag: v1
+  pullPolicy: IfNotPresent
+
+container:
+  port: 8090
+
+service:
+  type: ClusterIP
+  port: 80

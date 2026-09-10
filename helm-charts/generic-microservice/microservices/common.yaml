@@ -1,0 +1,15 @@
+serviceName: common
+
+replicaCount: 2
+
+image:
+  repository: common
+  tag: v1
+  pullPolicy: IfNotPresent
+
+container:
+  port: 8088
+
+service:
+  type: ClusterIP
+  port: 80
